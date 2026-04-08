@@ -138,12 +138,63 @@ button:active {
     color: white;
 }
 
+#particleCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* Puts it behind everything */
+    pointer-events: none; /* Allows you to click through the particles */
+}
+
+#instant-result {
+    min-height: 25px;
+    max-height: 80px; 
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #8ab4f8;
+    font-weight: bold;
+    overflow-y: auto; /* Allow vertical scroll for long definitions */
+    overflow-x: hidden; /* Hide horizontal scroll by default */
+    line-height: 1.4;
+    padding: 0 15px;
+    transition: all 0.3s ease;
+}
+
+/* 1. The main scrollbar area */
+::-webkit-scrollbar {
+    width: 6px;  /* Width for vertical scroll */
+    height: 4px; /* Height for horizontal scroll */
+}
+
+/* 2. The track (the background of the scrollbar) */
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02); 
+    border-radius: 10px;
+}
+
+/* 3. The thumb (the part you grab/see moving) */
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1); /* Subtle white */
+    backdrop-filter: blur(5px);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+/* 4. Hover effect to make it feel interactive */
+::-webkit-scrollbar-thumb:hover {
+    background: #4285F4; /* Changes to your theme blue on hover */
+    box-shadow: 0 0 8px rgba(66, 133, 244, 0.5);
+}
     </style>
 </head>
 <body>
+    <canvas id="particleCanvas"></canvas>
+
     <div class="search-wrapper">
         <div class="logo-container">
-            <img src="https://cdn.discordapp.com/attachments/805820289488912421/1490762219087073411/1775495586377.png?ex=69d53c02&is=69d3ea82&hm=3f40a6fedd356f0a9d522939f74b01e62830288ab5519db121ab3ad32052d316" id="customLogo" alt="Logo">
+            <img src="https://media.discordapp.net/attachments/805820289488912421/1491423581576495274/1775495586377.png?ex=69d7a3f3&is=69d65273&hm=f58b5d42d91a6f6c169daee5766f988c05456da588e749a8a5b931a07e618b75&=&format=webp&quality=lossless&width=688&height=368" id="customLogo" alt="Logo">
         </div>
         
         <div class="search-box-container">
@@ -165,6 +216,7 @@ button:active {
         </div>
                 <datalist id="search-suggestions"></datalist>
 
+                <div id="instant-result" style="height: 20px; margin-bottom: 10px; font-size: 14px; color: #8ab4f8; font-weight: bold;"></div>
                 <input type="text" id="userQuery" list="search-suggestions" placeholder="Search the web..." autofocus>
             
             <div class="button-group">
@@ -175,26 +227,57 @@ button:active {
     </div>
 
     <script>
+
+    const BANGS = {
+    '!w': { name: 'Wikipedia', url: 'https://en.wikipedia.org/wiki/Special:Search?search=' },
+    '!yt': { name: 'YouTube', url: 'https://www.youtube.com/results?search_query=' },
+    '!r': { name: 'Reddit', url: 'https://www.reddit.com/search/?q=' },
+    '!gh': { name: 'GitHub', url: 'https://github.com/search?q=' },
+    '!st': { name: 'StackOverflow', url: 'https://stackoverflow.com/search?q=' },
+    '!mdn': { name: 'MDN Dev Docs', url: 'https://developer.mozilla.org/en-US/search?q=' },
+    '!tr': { name: 'Translate', url: 'https://translate.google.com/?text=' },
+    '!amz': { name: 'Amazon', url: 'https://www.amazon.com/s?k=' },
+    '!map': { name: 'Google Maps', url: 'https://www.google.com/maps/search/' },
+    '!imdb': { name: 'IMDb', url: 'https://www.imdb.com/find?q=' },
+    '!tw': { name: 'Twitter/X', url: 'https://twitter.com/search?q=' },
+    '!tr': { name: 'Translate', url: 'https://translate.google.com/?sl=auto&tl=en&text=${actualQuery}' },
+    '!spotify': { name: 'Spotify', url: 'https://open.spotify.com/search/${actualQuery}' },
+    
+};
+
+
         const inputField = document.getElementById('userQuery');
 
         // Function to build the Google URL and redirect
 function executeSearch() {
-    const query = inputField.value.trim();
-    const engine = document.querySelector('input[name="engine"]:checked').value;
+    let query = inputField.value.trim();
+    let engine = document.querySelector('input[name="engine"]:checked').value;
     
-    if (query !== "") {
-        const isUrl = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(query);
+    if (query === "") return;
 
-        if (isUrl) {
-            window.location.href = query.startsWith('http') ? query : `https://${query}`;
-        } else {
-            let url = "";
-            if (engine === "google") url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-            if (engine === "youtube") url = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-            if (engine === "duck") url = `https://duckduckgo.com/?q=${encodeURIComponent(query)}`;
-            
-            window.location.href = url;
-        }
+    // !Bang Redirection (e.g., !w, !yt, !r)
+// Inside executeSearch()...
+if (query.startsWith('!')) {
+    const parts = query.split(' ');
+    const bang = parts[0].toLowerCase();
+    const actualQuery = encodeURIComponent(parts.slice(1).join(' '));
+
+    if (BANGS[bang]) {
+        window.location.href = BANGS[bang].url + actualQuery;
+        return;
+    }
+}
+
+    // Standard Logic
+    const isUrl = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(query);
+    if (isUrl) {
+        window.location.href = query.startsWith('http') ? query : `https://${query}`;
+    } else {
+        let url = "";
+        if (engine === "google") url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+        if (engine === "youtube") url = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+        if (engine === "duck") url = `https://duckduckgo.com/?q=${encodeURIComponent(query)}`;
+        window.location.href = url;
     }
 }
 
@@ -234,23 +317,210 @@ document.querySelectorAll('input[name="engine"]').forEach(radio => {
     radio.addEventListener('change', updateThemeColor);
 });
 
-inputField.addEventListener('input', async () => {
-    const query = inputField.value;
+// 1. The Global Callback Function
+window.handleSuggestions = function(data) {
+    const list = document.getElementById('search-suggestions');
+    list.innerHTML = ''; 
+    
+    // Google's format is [query, [suggestions]]
+    if (data && data[1]) {
+        data[1].forEach(suggestion => {
+            const option = document.createElement('option');
+            option.value = suggestion;
+            list.appendChild(option);
+        });
+    }
+    
+    // Cleanup the script tag
+    const oldScript = document.getElementById('suggestion-script');
+    if (oldScript) oldScript.remove();
+};
+
+// 2. The Input Listener
+inputField.addEventListener('input', () => {
+    handleInstantTools(inputField.value.trim());
+    const query = inputField.value.trim();
     if (query.length < 2) return;
 
-    // Fetching from a public suggest API (JSONP workaround often needed for live sites)
-    const response = await fetch(`https://suggestqueries.google.com/complete/search?client=firefox&q=${query}`);
-    const data = await response.json();
+    // Remove existing script tag if user is typing fast
+    const oldScript = document.getElementById('suggestion-script');
+    if (oldScript) oldScript.remove();
+
+    // Create a new script tag to fetch data (JSONP)
+    const script = document.createElement('script');
+    script.id = 'suggestion-script';
+    // The "callback=handleSuggestions" part tells Google to wrap the data in our function
+    script.src = `https://suggestqueries.google.com/complete/search?client=youtube&q=${encodeURIComponent(query)}&callback=handleSuggestions`;
     
-    const list = document.getElementById('search-suggestions');
-    list.innerHTML = ''; // Clear old suggestions
-    
-    data[1].forEach(suggestion => {
-        const option = document.createElement('option');
-        option.value = suggestion;
-        list.appendChild(option);
-    });
+    document.body.appendChild(script);
 });
+
+
+let mouse = { x: null, y: null, radius: 150 }; // radius is the "push" distance
+
+window.addEventListener('mousemove', (e) => {
+    mouse.x = e.x;
+    mouse.y = e.y;
+});
+
+// Reset mouse when it leaves the window so particles don't get stuck
+window.addEventListener('mouseout', () => {
+    mouse.x = null;
+    mouse.y = null;
+});
+
+const canvas = document.getElementById('particleCanvas');
+const ctx = canvas.getContext('2d');
+
+let particles = [];
+const particleCount = 60; // Increase for more "noise"
+
+function initCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+
+class Particle {
+    constructor() {
+        this.reset();
+    }
+
+    reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 2 + 0.5;
+        this.speedX = Math.random() * 0.5 - 0.25;
+        this.speedY = Math.random() * 0.5 - 0.25;
+        this.opacity = Math.random() * 0.5;
+    }
+
+update() {
+    // Basic drifting movement
+    this.x += this.speedX;
+    this.y += this.speedY;
+
+    // --- MOUSE REACTION LOGIC ---
+    if (mouse.x != null && mouse.y != null) {
+        let dx = this.x - mouse.x;
+        let dy = this.y - mouse.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < mouse.radius) {
+            const force = (mouse.radius - distance) / mouse.radius;
+            const directionX = dx / distance;
+            const directionY = dy / distance;
+            
+            // Push particles away
+            this.x += directionX * force * 5; 
+            this.y += directionY * force * 5;
+        }
+    }
+
+    // Wrap around screen instead of resetting (smoother)
+    if (this.x < 0) this.x = canvas.width;
+    if (this.x > canvas.width) this.x = 0;
+    if (this.y < 0) this.y = canvas.height;
+    if (this.y > canvas.height) this.y = 0;
+}
+
+    draw() {
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+function createParticles() {
+    for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+    }
+}
+
+function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+        p.update();
+        p.draw();
+    });
+    requestAnimationFrame(animate);
+}
+
+window.addEventListener('resize', initCanvas);
+initCanvas();
+createParticles();
+animate();
+
+async function handleInstantTools(query) {
+    const resultDiv = document.getElementById('instant-result');
+    resultDiv.innerHTML = ''; 
+
+    if (!query) return;
+
+    // 1. !Bang Visualizer (Shows when user starts with !)
+// Inside handleInstantTools()...
+if (query.startsWith('!')) {
+    const bangKey = query.split(' ')[0].toLowerCase();
+    
+    if (query === '!') {
+        // Show the cheat sheet
+        const list = Object.entries(BANGS).map(([k, v]) => `${k} (${v.name})`).join(' | ');
+        resultDiv.innerHTML = `<div style="font-size:11px; color:#9aa0a6; white-space:nowrap; overflow-x:auto;">${list}</div>`;
+    } else if (BANGS[bangKey]) {
+        // Show specific feedback (e.g., "Searching Wikipedia...")
+        resultDiv.innerHTML = `Searching <span style="color:#4285F4">${BANGS[bangKey].name}</span>...`;
+    }
+    return;
+}
+
+    // 2. Dictionary (Now displays full text)
+    if (query.toLowerCase().startsWith('define ')) {
+        const word = query.split(' ')[1];
+        if (word) {
+            try {
+                const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+                const data = await response.json();
+                if (data[0]) {
+                    const def = data[0].meanings[0].definitions[0].definition;
+                    resultDiv.innerText = def; // Display full definition
+                }
+            } catch (e) {
+                resultDiv.innerText = "Word not found...";
+            }
+        }
+        return;
+    }
+
+    // 3. Color Hex Viewer
+    const hexMatch = query.match(/^#([A-Fa-f0-9]{3}){1,2}$/);
+    if (hexMatch) {
+        resultDiv.innerHTML = `<span style="display:inline-block; width:12px; height:12px; background:${query}; border:1px solid white; margin-right:5px; vertical-align:middle;"></span> HEX Color: ${query.toUpperCase()}`;
+        return;
+    }
+
+
+    // 3. Keep your existing Math Logic
+    if (/^[0-9+\-*/().\s]+$/.test(query) && /[0-9]/.test(query)) {
+        try {
+            const res = Function('"use strict";return (' + query + ')')();
+            if (res !== undefined && res !== query) {
+                resultDiv.innerText = '= ' + res;
+                return;
+            }
+        } catch (e) {}
+    }
+
+    // 4. Keep your existing Unit Converter Logic
+    const convertMatch = query.toLowerCase().match(/^(\d+(\.\d+)?)\s*([a-z]+)\s+to\s+([a-z]+)$/);
+    if (convertMatch) {
+        const val = parseFloat(convertMatch[1]);
+        const from = convertMatch[3];
+        const to = convertMatch[4];
+        const rates = { 'kg_lbs': 2.20462, 'lbs_kg': 0.453592, 'km_miles': 0.621371, 'miles_km': 1.60934, 'cm_inch': 0.393701, 'inch_cm': 2.54 };
+        const key = `${from}_${to}`;
+        if (rates[key]) resultDiv.innerText = `${(val * rates[key]).toFixed(2)} ${to}`;
+    }
+}
     </script>
 
 </body>
