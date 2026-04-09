@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="marked.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimal Search</title>
+    <title>New Tab</title>
     <style>
 body {
     margin: 0;
@@ -32,7 +33,6 @@ body {
     animation: fadeIn 1s ease-out;
 }
 
-/* Custom Logo Container */
 .logo-container {
     margin-bottom: 30px;
 }
@@ -187,6 +187,31 @@ button:active {
     background: #4285F4; /* Changes to your theme blue on hover */
     box-shadow: 0 0 8px rgba(66, 133, 244, 0.5);
 }
+
+#instant-result div {
+    display: flex;
+    gap: 10px;
+    padding-bottom: 5px;
+}
+
+body {
+    /* Use !important to ensure no browser default styles override this */
+    overflow: hidden !important;
+}
+
+.readme-rendered h1, .readme-rendered h2 { 
+    color: #2ea44f; 
+    border-bottom: 1px solid #333;
+    padding-bottom: 5px;
+    font-size: 1.2em;
+}
+.readme-rendered ul { padding-left: 20px; }
+.readme-rendered code { 
+    background: rgba(255,255,255,0.1); 
+    padding: 2px 4px; 
+    border-radius: 3px; 
+}
+.readme-rendered a { color: #8ab4f8; }
     </style>
 </head>
 <body>
@@ -220,150 +245,250 @@ button:active {
                 <input type="text" id="userQuery" list="search-suggestions" placeholder="Search the web..." autofocus>
             
             <div class="button-group">
-                <button onclick="executeSearch()">Google Search</button>
-                <button onclick="luckySearch()">I'm Feeling Lucky</button>
+                <button id="searchBtn">Search</button>
+                <button id="luckyBtn">I'm Feeling Lucky</button>
             </div>
         </div>
     </div>
 
-    <script>
+<div class="mac-window" id="sidePanel">
+    <div class="window-header">
+        <div class="traffic-lights">
+            <span class="btn close" title="Close"></span>
+            <span class="btn minimize" title="Minimize"></span>
+            <span class="btn zoom" title="Zoom"></span>
+        </div>
+        <div class="window-title" id="panelTitle">WAYNE OS</div>
+    </div>
+    <div class="panel-content" id="panelContent">
+        <div id="idleView" class="idle-view">
+            <div id="currentTime" class="clock-large">00:00:00</div>
+            <div id="currentDate" class="date-sub">System Ready</div>
+        </div>
+    </div>
+</div>
 
-    const BANGS = {
+<style>
+.mac-window {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 260px; /* Made it slightly narrower */
+    height: 100px; /* Smaller default height */
+    min-height: 120px;
+    max-height: 80vh;
+    background: rgba(20, 20, 20, 0.7);
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+    z-index: 1000;
+    
+    /* VERTICAL RESIZE LOGIC */
+    resize: vertical;
+    overflow: hidden; 
+}
+
+.window-header {
+    height: 32px;
+    background: rgba(255, 255, 255, 0.03);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    flex-shrink: 0;
+}
+
+.traffic-lights { 
+    display: flex; 
+    gap: 8px; 
+}
+
+/* Base Buttons */
+.btn { 
+    width: 12px; height: 12px; 
+    border-radius: 50%; 
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.close { background: #ff5f56; }
+.minimize { background: #ffbd2e; }
+.zoom { background: #27c93f; }
+
+/* Icon logic on hover */
+.btn::before {
+    content: '';
+    font-size: 8px;
+    font-weight: bold;
+    color: rgba(0,0,0,0.5);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.traffic-lights:hover .btn::before { opacity: 1; }
+.close:hover::before { content: '✕'; }
+.minimize:hover::before { content: '−'; }
+.zoom:hover::before { content: '┼'; }
+
+.window-title { 
+    flex-grow: 1;
+    text-align: center;
+    margin-right: 40px; /* Balance the traffic lights */
+    color: rgba(255, 255, 255, 0.4); 
+    font-size: 11px; 
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.panel-content { 
+    padding: 15px; 
+    color: #ddd; 
+    overflow-y: auto; 
+    flex-grow: 1; 
+    display: flex;
+    flex-direction: column;
+}
+
+/* Clock Styles */
+.idle-view { text-align: center; margin: auto; }
+.clock-large { font-size: 28px; font-weight: 300; letter-spacing: -1px; }
+.date-sub { font-size: 10px; color: #2ea44f; text-transform: uppercase; margin-top: 5px; }
+
+/* Custom Scrollbar for the README */
+.panel-content::-webkit-scrollbar { width: 4px; }
+.panel-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+</style>
+<script>
+
+const BANGS = {
     '!w': { name: 'Wikipedia', url: 'https://en.wikipedia.org/wiki/Special:Search?search=' },
     '!yt': { name: 'YouTube', url: 'https://www.youtube.com/results?search_query=' },
     '!r': { name: 'Reddit', url: 'https://www.reddit.com/search/?q=' },
     '!gh': { name: 'GitHub', url: 'https://github.com/search?q=' },
     '!st': { name: 'StackOverflow', url: 'https://stackoverflow.com/search?q=' },
     '!mdn': { name: 'MDN Dev Docs', url: 'https://developer.mozilla.org/en-US/search?q=' },
-    '!tr': { name: 'Translate', url: 'https://translate.google.com/?text=' },
+    '!tr': { name: 'Translate', url: 'https://translate.google.com/?sl=auto&tl=en&text=' },
     '!amz': { name: 'Amazon', url: 'https://www.amazon.com/s?k=' },
     '!map': { name: 'Google Maps', url: 'https://www.google.com/maps/search/' },
     '!imdb': { name: 'IMDb', url: 'https://www.imdb.com/find?q=' },
-    '!tw': { name: 'Twitter/X', url: 'https://twitter.com/search?q=' },
-    '!tr': { name: 'Translate', url: 'https://translate.google.com/?sl=auto&tl=en&text=${actualQuery}' },
-    '!spotify': { name: 'Spotify', url: 'https://open.spotify.com/search/${actualQuery}' },
-    
+    '!ai': { name: 'ChatGPT', url: 'https://chatgpt.com/?q=' }
 };
 
+const inputField = document.getElementById('userQuery');
+const searchBtn = document.getElementById('searchBtn');
+const luckyBtn = document.getElementById('luckyBtn');
 
-        const inputField = document.getElementById('userQuery');
 
-        // Function to build the Google URL and redirect
+searchBtn.addEventListener('click', executeSearch);
+luckyBtn.addEventListener('click', luckySearch);
+
+
+inputField.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') executeSearch();
+});
+
+let wayneRepos = [];
+
+async function loadWayneRepos() {
+    try {
+        // Fetches up to 100 public repos for your specific user
+        const response = await fetch('https://api.github.com/users/samwelwayne266-coder/repos?per_page=100');
+        const data = await response.json();
+        if (Array.isArray(data)) {
+            wayneRepos = data.map(repo => repo.name);
+        }
+    } catch (e) {
+        console.error("Wayne Protocol: Could not reach GitHub index.");
+    }
+}
+loadWayneRepos();
+
 function executeSearch() {
     let query = inputField.value.trim();
     let engine = document.querySelector('input[name="engine"]:checked').value;
-    
     if (query === "") return;
 
-    // !Bang Redirection (e.g., !w, !yt, !r)
-// Inside executeSearch()...
-if (query.startsWith('!')) {
-    const parts = query.split(' ');
-    const bang = parts[0].toLowerCase();
-    const actualQuery = encodeURIComponent(parts.slice(1).join(' '));
+    if (query.startsWith('!')) {
+        const parts = query.split(' ');
+        const bang = parts[0].toLowerCase();
+        const actualQuery = encodeURIComponent(parts.slice(1).join(' '));
+        if (BANGS[bang]) {
+            window.location.href = BANGS[bang].url + actualQuery;
+            return;
+        }
+    }
 
-    if (BANGS[bang]) {
-        window.location.href = BANGS[bang].url + actualQuery;
+    if (query.toLowerCase().startsWith('wayne://')) {
+        // 1. Remove 'wayne://'
+        let path = query.substring(8); 
+
+        // 2. If it ends with '.com', strip it off so it doesn't break the GitHub URL
+        if (path.toLowerCase().endsWith('.com')) {
+            path = path.substring(0, path.length - 4);
+        }
+
+        // 3. Redirect to your GitHub profile/repo
+        window.location.href = `https://github.com/samwelwayne266-coder/${path}`;
         return;
     }
-}
 
-    // Standard Logic
     const isUrl = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(query);
     if (isUrl) {
         window.location.href = query.startsWith('http') ? query : `https://${query}`;
     } else {
-        let url = "";
-        if (engine === "google") url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+        let url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
         if (engine === "youtube") url = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
         if (engine === "duck") url = `https://duckduckgo.com/?q=${encodeURIComponent(query)}`;
         window.location.href = url;
     }
 }
 
-        // Handle "Enter" key press
-        inputField.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                executeSearch();
-            }
-        });
-
-        // "I'm Feeling Lucky" - Directs to the first result
-        function luckySearch() {
-            const query = inputField.value.trim();
-            if (query !== "") {
-                window.location.href = `https://www.google.com/search?q=${encodeURIComponent(query)}&btnI=I`;
-            }
-        }
-
-        // Function to update the glow color based on selected engine
-function updateThemeColor() {
-    const engine = document.querySelector('input[name="engine"]:checked').value;
-    const input = document.getElementById('userQuery');
-    
-    const colors = {
-        'google': '#4285F4',    // Google Blue
-        'youtube': '#FF0000',   // YouTube Red
-        'duck': '#DE5833'       // DuckDuckGo Orange
-    };
-
-    // Update the CSS variable or direct style
-    input.style.setProperty('border-color', colors[engine]);
-    input.style.setProperty('box-shadow', `0 0 15px ${colors[engine]}4d`); // 4d is 30% transparency
+function luckySearch() {
+    const query = inputField.value.trim();
+    if (query !== "") {
+        window.location.href = `https://www.google.com/search?q=${encodeURIComponent(query)}&btnI=I`;
+    }
 }
 
-// Attach listeners to the radio buttons
-document.querySelectorAll('input[name="engine"]').forEach(radio => {
-    radio.addEventListener('change', updateThemeColor);
-});
-
-// 1. The Global Callback Function
-window.handleSuggestions = function(data) {
-    const list = document.getElementById('search-suggestions');
-    list.innerHTML = ''; 
-    
-    // Google's format is [query, [suggestions]]
-    if (data && data[1]) {
-        data[1].forEach(suggestion => {
-            const option = document.createElement('option');
-            option.value = suggestion;
-            list.appendChild(option);
-        });
-    }
-    
-    // Cleanup the script tag
-    const oldScript = document.getElementById('suggestion-script');
-    if (oldScript) oldScript.remove();
-};
-
-// 2. The Input Listener
-inputField.addEventListener('input', () => {
-    handleInstantTools(inputField.value.trim());
+inputField.addEventListener('input', async () => {
     const query = inputField.value.trim();
-    if (query.length < 2) return;
-
-    // Remove existing script tag if user is typing fast
-    const oldScript = document.getElementById('suggestion-script');
-    if (oldScript) oldScript.remove();
-
-    // Create a new script tag to fetch data (JSONP)
-    const script = document.createElement('script');
-    script.id = 'suggestion-script';
-    // The "callback=handleSuggestions" part tells Google to wrap the data in our function
-    script.src = `https://suggestqueries.google.com/complete/search?client=youtube&q=${encodeURIComponent(query)}&callback=handleSuggestions`;
+    handleInstantTools(query);
     
-    document.body.appendChild(script);
+if (query.toLowerCase().startsWith('wayne://') || query.length < 2) {
+        return; 
+    }
+
+try {
+        const response = await fetch(`https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        
+        const list = document.getElementById('search-suggestions');
+        // Only clear if we actually have Google data to show
+        if (data && data[1]) {
+            list.innerHTML = ''; 
+            data[1].forEach(suggestion => {
+                const option = document.createElement('option');
+                option.value = suggestion;
+                list.appendChild(option);
+            });
+        }
+    } catch (e) {
+        console.error("Suggestions blocked or unavailable");
+    }
 });
 
-
-let mouse = { x: null, y: null, radius: 150 }; // radius is the "push" distance
+let mouse = { x: null, y: null, radius: 150 }; 
 
 window.addEventListener('mousemove', (e) => {
     mouse.x = e.x;
     mouse.y = e.y;
 });
 
-// Reset mouse when it leaves the window so particles don't get stuck
 window.addEventListener('mouseout', () => {
     mouse.x = null;
     mouse.y = null;
@@ -373,7 +498,7 @@ const canvas = document.getElementById('particleCanvas');
 const ctx = canvas.getContext('2d');
 
 let particles = [];
-const particleCount = 60; // Increase for more "noise"
+const particleCount = 90; 
 
 function initCanvas() {
     canvas.width = window.innerWidth;
@@ -395,11 +520,10 @@ class Particle {
     }
 
 update() {
-    // Basic drifting movement
+
     this.x += this.speedX;
     this.y += this.speedY;
 
-    // --- MOUSE REACTION LOGIC ---
     if (mouse.x != null && mouse.y != null) {
         let dx = this.x - mouse.x;
         let dy = this.y - mouse.y;
@@ -409,14 +533,12 @@ update() {
             const force = (mouse.radius - distance) / mouse.radius;
             const directionX = dx / distance;
             const directionY = dy / distance;
-            
-            // Push particles away
+
             this.x += directionX * force * 5; 
             this.y += directionY * force * 5;
         }
     }
 
-    // Wrap around screen instead of resetting (smoother)
     if (this.x < 0) this.x = canvas.width;
     if (this.x > canvas.width) this.x = 0;
     if (this.y < 0) this.y = canvas.height;
@@ -453,75 +575,216 @@ animate();
 
 async function handleInstantTools(query) {
     const resultDiv = document.getElementById('instant-result');
+    const panelTitle = document.getElementById('panelTitle');
+    const panelContent = document.getElementById('panelContent');
+    const lowerQuery = query.toLowerCase().trim();
+    
+    // 1. Reset result div on every input
     resultDiv.innerHTML = ''; 
 
-    if (!query) return;
-
-    // 1. !Bang Visualizer (Shows when user starts with !)
-// Inside handleInstantTools()...
-if (query.startsWith('!')) {
-    const bangKey = query.split(' ')[0].toLowerCase();
-    
-    if (query === '!') {
-        // Show the cheat sheet
-        const list = Object.entries(BANGS).map(([k, v]) => `${k} (${v.name})`).join(' | ');
-        resultDiv.innerHTML = `<div style="font-size:11px; color:#9aa0a6; white-space:nowrap; overflow-x:auto;">${list}</div>`;
-    } else if (BANGS[bangKey]) {
-        // Show specific feedback (e.g., "Searching Wikipedia...")
-        resultDiv.innerHTML = `Searching <span style="color:#4285F4">${BANGS[bangKey].name}</span>...`;
-    }
-    return;
+if (!query || query.trim() === "") {
+        resultDiv.innerHTML = ''; 
+        panelTitle.innerText = "WAYNE OS";
+        
+        // Restore the clock view
+        panelContent.innerHTML = `
+            <div class="idle-view">
+                <div id="currentTime" class="clock-large">00:00:00</div>
+                <div id="currentDate" class="date-sub">System Ready</div>
+            </div>
+        `;
+        
+        // Re-trigger the clock display immediately so it doesn't wait for the next second
+        updateClock(); 
+        return;
 }
 
-    // 2. Dictionary (Now displays full text)
-    if (query.toLowerCase().startsWith('define ')) {
+    // 2. WAYNE PROTOCOL LOGIC
+    if (lowerQuery.startsWith('wayne://')) {
+        // Clean the query: remove 'wayne://' and any '.com' suffix
+        let repoPart = lowerQuery.substring(8);
+        if (repoPart.endsWith('.com')) {
+            repoPart = repoPart.slice(0, -4);
+        }
+        
+        const dataList = document.getElementById('search-suggestions');
+        dataList.innerHTML = '';
+        
+        // Filter suggestions based on cleaned repoPart
+        const matches = wayneRepos.filter(repo => 
+            repo.toLowerCase().includes(repoPart)
+        );
+
+        matches.forEach(repo => {
+            const option = document.createElement('option');
+            option.value = `wayne://${repo}.com`; 
+            dataList.appendChild(option);
+        });
+
+        // Check for exact match to trigger README fetch
+        const exactMatch = wayneRepos.find(r => r.toLowerCase() === repoPart);
+        if (exactMatch) {
+            fetchReadme(exactMatch); // Fetches from GitHub API
+        } else {
+            // Reset panel if no exact match found
+            panelTitle.innerText = "WAYNE OS";
+            if (!panelContent.querySelector('.idle-view')) {
+                updateClock(); // Refreshes the idle clock view
+            }
+        }
+
+        resultDiv.innerText = `Wayne Network: /${repoPart}`;
+        return; // Exit so other tools don't interfere with protocol mode
+    } 
+
+    // 3. INSTANT TOOLS (Only runs if NOT a wayne:// query)
+    
+    // Bangs Guide
+    if (query.startsWith('!')) {
+        const bangKey = query.split(' ')[0].toLowerCase();
+        if (query === '!') {
+            const list = Object.entries(BANGS).map(([k, v]) => `${k}`).join(' | ');
+            resultDiv.innerHTML = `<div style="font-size:11px; color:#9aa0a6;">${list}</div>`;
+        } else if (BANGS[bangKey]) {
+            resultDiv.innerHTML = `Searching <span style="color:#4285F4">${BANGS[bangKey].name}</span>...`;
+        }
+        return;
+    }
+
+    // Dictionary
+    if (lowerQuery.startsWith('define ')) {
         const word = query.split(' ')[1];
         if (word) {
             try {
                 const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
                 const data = await response.json();
                 if (data[0]) {
-                    const def = data[0].meanings[0].definitions[0].definition;
-                    resultDiv.innerText = def; // Display full definition
+                    resultDiv.innerText = data[0].meanings[0].definitions[0].definition;
                 }
-            } catch (e) {
-                resultDiv.innerText = "Word not found...";
-            }
+            } catch (e) { resultDiv.innerText = "Word not found..."; }
         }
         return;
     }
 
-    // 3. Color Hex Viewer
+    // Hex Color Preview
     const hexMatch = query.match(/^#([A-Fa-f0-9]{3}){1,2}$/);
     if (hexMatch) {
-        resultDiv.innerHTML = `<span style="display:inline-block; width:12px; height:12px; background:${query}; border:1px solid white; margin-right:5px; vertical-align:middle;"></span> HEX Color: ${query.toUpperCase()}`;
+        resultDiv.innerHTML = `<span style="display:inline-block; width:12px; height:12px; background:${query}; border:1px solid white; margin-right:5px; vertical-align:middle;"></span> HEX: ${query.toUpperCase()}`;
         return;
     }
 
-
-    // 3. Keep your existing Math Logic
+    // Calculator
     if (/^[0-9+\-*/().\s]+$/.test(query) && /[0-9]/.test(query)) {
         try {
             const res = Function('"use strict";return (' + query + ')')();
             if (res !== undefined && res !== query) {
                 resultDiv.innerText = '= ' + res;
-                return;
             }
         } catch (e) {}
     }
+}
 
-    // 4. Keep your existing Unit Converter Logic
-    const convertMatch = query.toLowerCase().match(/^(\d+(\.\d+)?)\s*([a-z]+)\s+to\s+([a-z]+)$/);
-    if (convertMatch) {
-        const val = parseFloat(convertMatch[1]);
-        const from = convertMatch[3];
-        const to = convertMatch[4];
-        const rates = { 'kg_lbs': 2.20462, 'lbs_kg': 0.453592, 'km_miles': 0.621371, 'miles_km': 1.60934, 'cm_inch': 0.393701, 'inch_cm': 2.54 };
-        const key = `${from}_${to}`;
-        if (rates[key]) resultDiv.innerText = `${(val * rates[key]).toFixed(2)} ${to}`;
+// 1. The Master Color Map
+const THEME_COLORS = {
+    'google': '#0062ff',
+    'youtube': '#FF0000',
+    'duck': '#DE5833',
+    '!map': '#01661a', 
+    '!w': '#ffffff', 
+    '!amz': '#ff9d00cd', 
+    '!imdb': '#ffea00', 
+    '!yt': '#FF0000', 
+    '!gh': '#fafafa',  
+    '!ai': '#a94efe',  
+    '!tr': '#3d73cb',   
+    '!st': '#f48024', 
+    'wayne://': '#2ea44f',     
+    '!r': '#ff7300'      
+};
+
+const panelContent = document.getElementById('panelContent');
+const panelTitle = document.getElementById('panelTitle');
+const timeDisplay = document.getElementById('currentTime');
+
+function updateClock() {
+    const now = new Date();
+    if (timeDisplay) {
+        timeDisplay.innerText = now.toLocaleTimeString('en-US', { 
+            hour12: false, 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit' 
+        });
     }
 }
-    </script>
+setInterval(updateClock, 1000);
+updateClock();
 
+async function fetchReadme(repoName) {
+    try {
+        const panelTitle = document.getElementById('panelTitle');
+        const panelContent = document.getElementById('panelContent');
+        
+        panelTitle.innerText = repoName.toUpperCase();
+        panelContent.innerHTML = `<div style="font-size:11px; color:#666;">Syncing wayne://${repoName}...</div>`;
+        
+        const response = await fetch(`https://api.github.com/repos/samwelwayne266-coder/${repoName}/readme`, {
+            headers: { 'Accept': 'application/vnd.github.v3.raw' }
+        });
+        
+        if (response.ok) {
+            const rawMarkdown = await response.text();
+            
+            // USE MARKED TO FORMAT THE HTML (No substring/ellipsis)
+            const formattedHTML = marked.parse(rawMarkdown);
+            
+            panelContent.innerHTML = `
+                <div class="readme-rendered" style="font-size: 12px; line-height: 1.4; color: #ddd;">
+                    ${formattedHTML}
+                </div>
+            `;
+        } else {
+            panelContent.innerHTML = `<div style="font-size:11px; color:#ff5f56;">Node Offline: No README found.</div>`;
+        }
+    } catch (e) {
+        panelContent.innerHTML = `<div style="font-size:11px;">Connection Error.</div>`;
+    }
+}
+
+function applyDynamicTheme(query) {
+    const input = document.getElementById('userQuery');
+    const engine = document.querySelector('input[name="engine"]:checked').value;
+    let targetColor = THEME_COLORS[engine]; // Default to selected engine color
+
+    // Check if the query starts with a known bang
+    const firstWord = query.split(' ')[0].toLowerCase();
+    if (THEME_COLORS[firstWord]) {
+        targetColor = THEME_COLORS[firstWord];
+    }
+
+    // Apply the glow and border
+    input.style.borderColor = targetColor;
+    input.style.boxShadow = `0 0 15px ${targetColor}4d`; // 4d is 30% alpha
+}
+
+// 2. Update the Listeners
+inputField.addEventListener('input', async () => {
+    const query = inputField.value.trim();
+    
+    // Trigger the color change
+    applyDynamicTheme(query);
+    
+    // Existing suggestion logic...
+    handleInstantTools(query);
+    // ... rest of your fetch code
+});
+
+// Update theme when radio buttons change
+document.querySelectorAll('input[name="engine"]').forEach(radio => {
+    radio.addEventListener('change', () => applyDynamicTheme(inputField.value.trim()));
+});
+
+
+</script>
 </body>
 </html>
