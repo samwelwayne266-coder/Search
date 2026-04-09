@@ -20,6 +20,9 @@ cd wayne-os
 # Open in your browser (macOS)
 open index.html
 ```
+
+---
+
 **🛠️ Key Features**
 
 *🔍 Adaptive Search*
