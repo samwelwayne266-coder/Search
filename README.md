@@ -23,7 +23,7 @@ open index.html
 
 ---
 
-***🛠️ Key Features***
+##🛠️ Key Features
 
 **🔍 Adaptive Search**
 
@@ -45,8 +45,17 @@ A custom internal protocol for deep GitHub integration:
 ``Selecting a repo triggers the Wayne OS Side Panel to fetch and render the README.md using the GitHub API and marked.js.``
 
 
-🖥️ macOS Side Panel
+**🖥️ macOS Side Panel**
 
-A persistent window that serves as your system command center:Idle Mode: Displays a high-precision digital clock and system status.Documentation Mode: Renders Markdown documentation fetched via the Wayne Protocol.Interactive Controls: Fully functional "Traffic Light" buttons and vertical resizing.📋 Command GuideCommandAction!w [query]Search Wikipedia!gh [query]Search GitHub Repositoriesdefine [word]Instant dictionary definition in the UI#hexVisual preview of a HEX color code[math]Real-time calculation (e.g., 25 * 4 / 2)🎨 Technical StackFrontend: HTML5, CSS3 (Custom Flexbox), Vanilla JavaScript (ES6+).Visuals: HTML5 Canvas API for the interactive particle engine.Markdown: marked.min.js for real-time documentation rendering.APIs: Integration with GitHub REST API and Google Suggest queries.⚙️ CustomizationTo link your own GitHub account to the Wayne Protocol, modify the following line in the <script> section of index.html:JavaScript// Replace with your GitHub username in the fetch URL
+A persistent window that serves as your system command center:
+
+`Idle Mode` Displays a high-precision digital clock and system status.
+
+`Documentation Mode` Renders Markdown documentation fetched via the Wayne Protocol.
+
+`Interactive Controls` Fully functional "Traffic Light" buttons and vertical resizing.
+
+
+📋 Command GuideCommandAction!w [query]Search Wikipedia!gh [query]Search GitHub Repositoriesdefine [word]Instant dictionary definition in the UI#hexVisual preview of a HEX color code[math]Real-time calculation (e.g., 25 * 4 / 2)🎨 Technical StackFrontend: HTML5, CSS3 (Custom Flexbox), Vanilla JavaScript (ES6+).Visuals: HTML5 Canvas API for the interactive particle engine.Markdown: marked.min.js for real-time documentation rendering.APIs: Integration with GitHub REST API and Google Suggest queries.⚙️ CustomizationTo link your own GitHub account to the Wayne Protocol, modify the following line in the <script> section of index.html:JavaScript// Replace with your GitHub username in the fetch URL
 const response = await fetch('[https://api.github.com/users/YOUR_USERNAME_HERE/repos?per_page=100](https://api.github.com/users/YOUR_USERNAME_HERE/repos?per_page=100)');
 [!IMPORTANT]This interface requires an active internet connection to fetch GitHub repository data and live search suggestions.
