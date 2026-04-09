@@ -23,7 +23,7 @@ open index.html
 
 ---
 
-##🛠️ Key Features
+## 🛠️ Key Features
 
 **🔍 Adaptive Search**
 
