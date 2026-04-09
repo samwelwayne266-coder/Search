@@ -33,7 +33,7 @@ open index.html
 
 `Bang Shortcuts` Use prefixes like !w (Wikipedia), !gh (GitHub), or !ai (ChatGPT) to redirect queries instantly.
 
---
+----
 
 **⚡ Wayne Protocol (wayne://)**
 
