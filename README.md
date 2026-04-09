@@ -14,10 +14,10 @@ git clone [https://github.com/samwelwayne266-coder/search.git](https://github.co
 ```
 ```bash
 # Navigate to the directory
-cd wayne-os
+cd search
 ```
 ```bash
-# Open in your browser (macOS)
+# Open in your browser
 open index.html
 ```
 
