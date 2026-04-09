@@ -23,13 +23,16 @@ open index.html
 **🛠️ Key Features**
 
 *🔍 Adaptive Search*
+
 `Dynamic Theming` The search bar glow and border color adapt in real-time based on your chosen engine or specific "Bang" commands.
 
 `Multi-Engine Support` Quick-toggle between Google, YouTube, and DuckDuckGo.
 
 `Bang Shortcuts` Use prefixes like !w (Wikipedia), !gh (GitHub), or !ai (ChatGPT) to redirect queries instantly.
 
+
 ⚡ Wayne Protocol (wayne://)
+
 A custom internal protocol for deep GitHub integration:
 ``Type wayne://[repo-name] in the search bar.``
 ``The system live-filters your public GitHub repositories.``
