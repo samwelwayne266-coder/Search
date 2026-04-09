@@ -36,7 +36,7 @@ open index.html
 
 ### ⚡ Wayne Protocol (wayne://)
 
-A custom internal protocol for deep GitHub integration:
+-A custom internal protocol for deep GitHub integration:
 
 ``Type wayne://[repo-name] in the search bar.``
 
@@ -47,7 +47,7 @@ A custom internal protocol for deep GitHub integration:
 
 ### 🖥️ macOS Side Panel
 
-A persistent window that serves as your system command center:
+-A persistent window that serves as your system command center:
 
 `Idle Mode` Displays a high-precision digital clock and system status.
 
@@ -77,7 +77,7 @@ A persistent window that serves as your system command center:
 
 ### ⚙️ Customization
 
-To link your own GitHub account to the Wayne Protocol, modify the following line in the `<script>` section of `index.html`:
+-To link your own GitHub account to the Wayne Protocol, modify the following line in the `<script>` section of `index.html`:
 
 ```bash
 # Replace with your GitHub username in the fetch URL
