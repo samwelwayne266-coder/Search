@@ -25,7 +25,7 @@ open index.html
 
 ## 🛠️ Key Features
 
-#### 🔍 Adaptive Search
+### 🔍 Adaptive Search
 
 `Dynamic Theming` The search bar glow and border color adapt in real-time based on your chosen engine or specific "Bang" commands.
 
@@ -34,7 +34,7 @@ open index.html
 `Bang Shortcuts` Use prefixes like !w (Wikipedia), !gh (GitHub), or !ai (ChatGPT) to redirect queries instantly.
 
 
-#### ⚡ Wayne Protocol (wayne://)
+### ⚡ Wayne Protocol (wayne://)
 
 A custom internal protocol for deep GitHub integration:
 
@@ -45,7 +45,7 @@ A custom internal protocol for deep GitHub integration:
 ``Selecting a repo triggers the Wayne OS Side Panel to fetch and render the README.md using the GitHub API and marked.js.``
 
 
-#### 🖥️ macOS Side Panel
+### 🖥️ macOS Side Panel
 
 A persistent window that serves as your system command center:
 
@@ -56,7 +56,7 @@ A persistent window that serves as your system command center:
 `Interactive Controls` Fully functional "Traffic Light" buttons and vertical resizing.
 
 
-#### 📋 Command Guide
+### 📋 Command Guide
 
 | Command | Action |
 | :--- | :--- |
@@ -66,7 +66,7 @@ A persistent window that serves as your system command center:
 | `#hex` | Visual preview of a HEX color code |
 | `[math]` | Real-time calculation (e.g., `25 * 4 / 2`) |
 
-#### 🎨 Technical Stack
+### 🎨 Technical Stack
 `Frontend` HTML5, CSS3 (Custom Flexbox), Vanilla JavaScript (ES6+).
 
 `Visuals` HTML5 Canvas API for the interactive particle engine.
@@ -75,7 +75,7 @@ A persistent window that serves as your system command center:
 
 `APIs` Integration with GitHub REST API and Google Suggest queries.
 
-#### ⚙️ Customization
+### ⚙️ Customization
 
 To link your own GitHub account to the Wayne Protocol, modify the following line in the `<script>` section of `index.html`:
 
