@@ -398,7 +398,7 @@ let wayneRepos = [];
 async function loadWayneRepos() {
     try {
         // Fetches up to 100 public repos for your specific user
-        const response = await fetch('https://api.github.com/users/samwelwayne266-coder/repos?per_page=100');
+        const response = await fetch('https://api.github.com/users/itiswayneee/repos?per_page=100');
         const data = await response.json();
         if (Array.isArray(data)) {
             wayneRepos = data.map(repo => repo.name);
