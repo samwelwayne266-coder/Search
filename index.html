@@ -434,7 +434,7 @@ function executeSearch() {
         }
 
         // 3. Redirect to your GitHub profile/repo
-        window.location.href = `https://github.com/samwelwayne266-coder/${path}`;
+        window.location.href = `https://github.com/itiswayneee/${path}`;
         return;
     }
 
@@ -723,7 +723,7 @@ async function fetchReadme(repoName) {
         panelTitle.innerText = repoName.toUpperCase();
         panelContent.innerHTML = `<div style="font-size:11px; color:#666;">Syncing wayne://${repoName}...</div>`;
         
-        const response = await fetch(`https://api.github.com/repos/samwelwayne266-coder/${repoName}/readme`, {
+        const response = await fetch(`https://api.github.com/repos/itiswayneee/${repoName}/readme`, {
             headers: { 'Accept': 'application/vnd.github.v3.raw' }
         });
         
