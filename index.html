@@ -33,6 +33,7 @@ body {
     animation: fadeIn 1s ease-out;
 }
 
+/* Custom Logo Container */
 .logo-container {
     margin-bottom: 30px;
 }
@@ -274,7 +275,7 @@ body {
     top: 20px;
     right: 20px;
     width: 260px; /* Made it slightly narrower */
-    height: 100px; /* Smaller default height */
+    height: 500px; /* Smaller default height */
     min-height: 120px;
     max-height: 80vh;
     background: rgba(20, 20, 20, 0.7);
@@ -364,7 +365,6 @@ body {
 .panel-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
 </style>
 <script>
-
 const BANGS = {
     '!w': { name: 'Wikipedia', url: 'https://en.wikipedia.org/wiki/Special:Search?search=' },
     '!yt': { name: 'YouTube', url: 'https://www.youtube.com/results?search_query=' },
@@ -579,71 +579,83 @@ async function handleInstantTools(query) {
     const panelContent = document.getElementById('panelContent');
     const lowerQuery = query.toLowerCase().trim();
     
-    // 1. Reset result div on every input
     resultDiv.innerHTML = ''; 
 
 if (!query || query.trim() === "") {
-        resultDiv.innerHTML = ''; 
-        panelTitle.innerText = "WAYNE OS";
-        
-        // Restore the clock view
-        panelContent.innerHTML = `
-            <div class="idle-view">
-                <div id="currentTime" class="clock-large">00:00:00</div>
-                <div id="currentDate" class="date-sub">System Ready</div>
+    resultDiv.innerHTML = ''; 
+    panelTitle.innerText = "SYSTEM DOCUMENTATION v1.0";
+    
+    panelContent.innerHTML = `
+        <div class="instructions-view" style="font-size: 11px; line-height: 1.5; color: #aaa; padding: 12px; font-family: monospace;">
+            <div style="margin-bottom: 15px;">
+                <div style="color: #2ea44f; font-weight: bold; border-bottom: 1px solid #2ea44f33; margin-bottom: 5px;">[ WAYNE_PROTOCOL ]</div>
+                <div style="padding-left: 5px;">
+                    • <span style="color: #fff;">wayne://[repo-name]</span> : Fetches README directly from your GitHub profile.<br>
+                    • <span style="color: #666;">Note: Use '.com' suffix for autocomplete triggering.</span>
+                </div>
             </div>
-        `;
-        
-        // Re-trigger the clock display immediately so it doesn't wait for the next second
-        updateClock(); 
-        return;
+            
+            <div style="margin-bottom: 15px;">
+                <div style="color: #4285F4; font-weight: bold; border-bottom: 1px solid #4285F433; margin-bottom: 5px;">[ SEARCH_BANGS ]</div>
+                <div style="padding-left: 5px;">
+                    • <span style="color: #fff;">!yt [query]</span> : Instant YouTube results.<br>
+                    • <span style="color: #fff;">!ai [query]</span> : Open ChatGPT interface.<br>
+                    • <span style="color: #fff;">!gh / !st</span> : Developer-focused search (GitHub/StackOverflow).<br>
+                    • <span style="color: #fff;">!tr / !w</span> : Language translation and Wiki lookup.
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <div style="color: #f48024; font-weight: bold; border-bottom: 1px solid #f4802433; margin-bottom: 5px;">[ UTILITY_MODULES ]</div>
+                <div style="padding-left: 5px;">
+                    • <span style="color: #fff;">define [word]</span> : Fetches definitions from the global lexicon.<br>
+                    • <span style="color: #fff;">#[hex_code]</span> : Live preview of CSS color values.<br>
+                    • <span style="color: #fff;">[10 + 5 * 2]</span> : Standard arithmetic evaluation.
+                </div>
+            </div>
+
+            <div style="border: 1px dashed #444; padding: 8px; color: #666; font-style: italic;">
+                System Status: <span style="color: #2ea44f;">ONLINE</span><br>
+                Press <span style="color: #fff;">[ENTER]</span> to execute search.<br>
+                Type <span style="color: #fff;">!</span> to see all available bangs.
+            </div>
+        </div>
+    `;
+    return;
 }
+    // ... rest of your tool logic (wayne://, !, define, etc)
 
     // 2. WAYNE PROTOCOL LOGIC
     if (lowerQuery.startsWith('wayne://')) {
-        // Clean the query: remove 'wayne://' and any '.com' suffix
         let repoPart = lowerQuery.substring(8);
-        if (repoPart.endsWith('.com')) {
-            repoPart = repoPart.slice(0, -4);
-        }
+        if (repoPart.endsWith('.com')) repoPart = repoPart.slice(0, -4);
         
         const dataList = document.getElementById('search-suggestions');
         dataList.innerHTML = '';
         
-        // Filter suggestions based on cleaned repoPart
-        const matches = wayneRepos.filter(repo => 
-            repo.toLowerCase().includes(repoPart)
-        );
-
+        const matches = wayneRepos.filter(repo => repo.toLowerCase().includes(repoPart));
         matches.forEach(repo => {
             const option = document.createElement('option');
             option.value = `wayne://${repo}.com`; 
             dataList.appendChild(option);
         });
 
-        // Check for exact match to trigger README fetch
         const exactMatch = wayneRepos.find(r => r.toLowerCase() === repoPart);
         if (exactMatch) {
-            fetchReadme(exactMatch); // Fetches from GitHub API
+            fetchReadme(exactMatch);
         } else {
-            // Reset panel if no exact match found
             panelTitle.innerText = "WAYNE OS";
-            if (!panelContent.querySelector('.idle-view')) {
-                updateClock(); // Refreshes the idle clock view
-            }
+            panelContent.innerHTML = `<div style="font-size:11px; color:#666; padding:10px;">Searching Wayne Network...</div>`;
         }
-
         resultDiv.innerText = `Wayne Network: /${repoPart}`;
-        return; // Exit so other tools don't interfere with protocol mode
+        return;
     } 
 
-    // 3. INSTANT TOOLS (Only runs if NOT a wayne:// query)
-    
-    // Bangs Guide
+    // 3. BANGS & TOOLS
     if (query.startsWith('!')) {
         const bangKey = query.split(' ')[0].toLowerCase();
         if (query === '!') {
-            const list = Object.entries(BANGS).map(([k, v]) => `${k}`).join(' | ');
+            const list = Object.entries(BANGS).map(([k]) => k).join(' | ');
             resultDiv.innerHTML = `<div style="font-size:11px; color:#9aa0a6;">${list}</div>`;
         } else if (BANGS[bangKey]) {
             resultDiv.innerHTML = `Searching <span style="color:#4285F4">${BANGS[bangKey].name}</span>...`;
@@ -658,28 +670,23 @@ if (!query || query.trim() === "") {
             try {
                 const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
                 const data = await response.json();
-                if (data[0]) {
-                    resultDiv.innerText = data[0].meanings[0].definitions[0].definition;
-                }
+                if (data[0]) resultDiv.innerText = data[0].meanings[0].definitions[0].definition;
             } catch (e) { resultDiv.innerText = "Word not found..."; }
         }
         return;
     }
 
-    // Hex Color Preview
+    // Hex & Calculator
     const hexMatch = query.match(/^#([A-Fa-f0-9]{3}){1,2}$/);
     if (hexMatch) {
         resultDiv.innerHTML = `<span style="display:inline-block; width:12px; height:12px; background:${query}; border:1px solid white; margin-right:5px; vertical-align:middle;"></span> HEX: ${query.toUpperCase()}`;
         return;
     }
 
-    // Calculator
     if (/^[0-9+\-*/().\s]+$/.test(query) && /[0-9]/.test(query)) {
         try {
             const res = Function('"use strict";return (' + query + ')')();
-            if (res !== undefined && res !== query) {
-                resultDiv.innerText = '= ' + res;
-            }
+            if (res !== undefined && res !== query) resultDiv.innerText = '= ' + res;
         } catch (e) {}
     }
 }
@@ -706,19 +713,6 @@ const panelContent = document.getElementById('panelContent');
 const panelTitle = document.getElementById('panelTitle');
 const timeDisplay = document.getElementById('currentTime');
 
-function updateClock() {
-    const now = new Date();
-    if (timeDisplay) {
-        timeDisplay.innerText = now.toLocaleTimeString('en-US', { 
-            hour12: false, 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            second: '2-digit' 
-        });
-    }
-}
-setInterval(updateClock, 1000);
-updateClock();
 
 async function fetchReadme(repoName) {
     try {
@@ -784,7 +778,8 @@ document.querySelectorAll('input[name="engine"]').forEach(radio => {
     radio.addEventListener('change', () => applyDynamicTheme(inputField.value.trim()));
 });
 
-
+// Initialize the UI with instructions on load
+handleInstantTools("");
 </script>
 </body>
 </html>
